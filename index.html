@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rai // Desenvolvedor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --bg: #080c0a;
+    --bg-alt: #0d1410;
+    --card: #111a15;
+    --border: #1e3326;
+    --green: #00ff66;
+    --green-dim: rgba(0, 255, 102, 0.15);
+    --text: #e2ece6;
+    --muted: #82998b;
+    --font: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* Fundo Matrix & CRT */
+  #rain {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.22;
+    pointer-events: none;
+  }
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    pointer-events: none;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 4px;
+  }
+  body.no-crt .scanlines { display: none; }
+  body.no-rain #rain { display: none; }
+
+  .page { position: relative; z-index: 1; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+
+  /* Navbar */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(8, 12, 10, 0.9);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar-in {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+  }
+  .brand { text-decoration: none; font-weight: 700; font-size: 1.05rem; }
+  .g { color: var(--green); }
+  .m { color: var(--muted); }
+  .nav { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+  .nav a { color: var(--text); text-decoration: none; font-size: 0.88rem; transition: color .2s; }
+  .nav a:hover { color: var(--green); }
+  .btn-small {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--green);
+    font-family: var(--font);
+    font-size: 0.75rem;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .btn-small:hover { background: var(--green-dim); }
+
+  /* Hero */
+  .hero { padding: 80px 0 70px; }
+  .prompt { font-size: 0.95rem; margin-bottom: 8px; color: var(--muted); }
+  h1 { font-size: clamp(2.6rem, 6vw, 4.2rem); color: var(--green); letter-spacing: -1px; }
+  .role { font-size: 1.2rem; color: var(--text); margin: 8px 0 18px; min-height: 1.8rem; }
+  .cursor { color: var(--green); animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .lead { max-width: 620px; color: var(--muted); margin-bottom: 28px; font-size: 0.98rem; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn {
+    display: inline-block;
+    padding: 11px 20px;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-primary { background: var(--green); color: #051109; border: 1px solid var(--green); }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-outline { background: transparent; color: var(--green); border: 1px solid var(--green); }
+  .btn-outline:hover { background: var(--green-dim); }
+
+  /* Secções */
+  .section { padding: 68px 0; }
+  .section.alt { background: var(--bg-alt); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .eyebrow { color: var(--green); font-size: 0.85rem; margin-bottom: 6px; }
+  h2 { font-size: 1.8rem; margin-bottom: 24px; }
+  .sub { color: var(--muted); margin-top: -14px; margin-bottom: 24px; font-size: 0.92rem; }
+
+  /* Perfil Grid */
+  .two {
+    display: grid;
+    grid-template-columns: 260px 1fr 1fr;
+    gap: 20px;
+    align-items: stretch;
+  }
+  @media (max-width: 880px) {
+    .two { grid-template-columns: 1fr; }
+  }
+
+  /* Moldura da Foto */
+  .photo, .code, .side {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .photo-bar, .code-bar {
+    background: #16221b;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    color: var(--green);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .photo-slot {
+    position: relative;
+    flex: 1;
+    min-height: 290px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0a100d;
+    cursor: pointer;
+  }
+  .photo-slot img {
+    width: 100%;
+    height: 100%;
+    min-height: 290px;
+    object-fit: cover;
+    object-position: center 20%;
+    display: block;
+  }
+  .photo-ph {
+    text-align: center;
+    padding: 20px;
+    color: var(--muted);
+  }
+  .photo-ph b { display: block; font-size: 2.5rem; color: var(--green); margin: 6px 0; }
+  .photo-ph span { font-size: 0.78rem; display: block; }
+  .upload-tip {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    background: rgba(8, 12, 10, 0.85);
+    border: 1px solid var(--border);
+    color: var(--green);
+    font-size: 0.72rem;
+    text-align: center;
+    padding: 4px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .photo-slot:hover .upload-tip { opacity: 1; }
+
+  /* Bloco perfil.js */
+  .code-body { padding: 14px; font-size: 0.85rem; overflow-x: auto; }
+  .cl { display: flex; gap: 12px; margin-bottom: 3px; }
+  .ln { color: #476152; user-select: none; width: 18px; text-align: right; }
+  .k { color: #ff7b72; }
+  .s { color: #a5d6ff; }
+  .n { color: var(--green); }
+  .p { color: var(--muted); }
+
+  /* Abas */
+  .tabs { display: flex; border-bottom: 1px solid var(--border); background: #16221b; }
+  .tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-family: var(--font);
+    font-size: 0.82rem;
+    padding: 10px 8px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .tab[aria-pressed="true"] { color: var(--green); border-bottom-color: var(--green); background: var(--card); }
+  .tab-panel { padding: 18px; font-size: 0.88rem; }
+  .tab-panel h3 { color: var(--green); margin-bottom: 10px; font-size: 1rem; }
+  .tab-panel p { color: var(--text); }
+
+  /* Terminal */
+  .term {
+    background: #060907;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .term-bar {
+    background: #16221b;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+  .chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--green);
+    font-family: var(--font);
+    font-size: 0.78rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .chip:hover { background: var(--green-dim); }
+  .term-out {
+    padding: 16px;
+    min-height: 190px;
+    max-height: 300px;
+    overflow-y: auto;
+    font-size: 0.88rem;
+    white-space: pre-wrap;
+  }
+  .term-line { margin-bottom: 10px; }
+  .term-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+    background: #0a100d;
+  }
+  .term-form input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.9rem;
+    outline: none;
+  }
+  .send {
+    background: var(--green);
+    color: #051109;
+    border: none;
+    font-family: var(--font);
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  /* Stack & Projetos */
+  .stack { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+  .tag {
+    background: var(--green-dim);
+    border: 1px solid var(--green);
+    color: var(--green);
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 0.82rem;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .card-meta { color: var(--green); font-size: 0.78rem; margin-bottom: 8px; }
+  .card h3 { font-size: 1.08rem; margin-bottom: 10px; }
+  .card p { color: var(--muted); font-size: 0.88rem; }
+
+  /* Player */
+  .player {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 22px;
+  }
+  .cover {
+    width: 120px;
+    height: 120px;
+    background: #16221b;
+    border: 1px solid var(--green);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--green);
+  }
+  .player-info { flex: 1; min-width: 240px; }
+  .now-label { color: var(--green); font-size: 0.8rem; text-transform: uppercase; }
+  .player-info h3 { font-size: 1.3rem; margin: 4px 0; }
+  .artist { color: var(--muted); margin-bottom: 10px; font-size: 0.9rem; }
+  .player-info p { color: var(--text); font-size: 0.88rem; margin-bottom: 16px; }
+
+  /* Contato */
+  .contact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    align-items: center;
+  }
+  @media (max-width: 760px) { .contact { grid-template-columns: 1fr; } }
+  .rows { display: flex; flex-direction: column; gap: 12px; }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 0.88rem;
+  }
+  .row .label { color: var(--green); }
+  .row a { color: var(--text); text-decoration: none; }
+  .row a:hover { color: var(--green); text-decoration: underline; }
+
+  /* Footer */
+  .footer { padding: 24px 0; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); }
+  .footer-in { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .footer a { color: var(--green); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<canvas id="rain" aria-hidden="true"></canvas>
+<div class="scanlines" aria-hidden="true"></div>
+
+<div class="page" id="topo">
+
+  <header class="topbar">
+    <div class="wrap topbar-in">
+      <a class="brand" href="#topo"><span class="g">rai@samambaia</span><span class="m">:~$</span></a>
+      <nav class="nav" aria-label="Principal">
+        <a href="#perfil">Perfil</a>
+        <a href="#terminal">Terminal</a>
+        <a href="#projetos">Projetos</a>
+        <a href="#musica">Música</a>
+        <a href="#contato">Contato</a>
+        <button class="btn-small" id="btn-crt" type="button" aria-pressed="true">CRT: ligado</button>
+        <button class="btn-small" id="btn-rain" type="button" aria-pressed="true">Chuva: ligada</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Abertura -->
+    <section class="hero">
+      <div class="wrap">
+        <div class="prompt"><span class="g">$</span> whoami</div>
+        <h1>Rai</h1>
+        <div class="role"><span id="typed"></span><span class="cursor" aria-hidden="true">|</span></div>
+        <p class="lead">25 anos, de Samambaia Sul, no DF. Estudante de Engenharia de Software na UDF e encarregado de FLV. Aqui eu junto código, dados e rotina real.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="#terminal">Abrir o terminal</a>
+          <a class="btn btn-outline" href="#projetos">Ver projetos</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Perfil -->
+    <section class="section alt" id="perfil">
+      <div class="wrap">
+        <div class="eyebrow">// perfil.js</div>
+        <h2>Quem é o Rai</h2>
+        <div class="two">
+
+          <!-- Moldura configurada para 1_2.jpeg -->
+          <div class="photo">
+            <div class="photo-bar">
+              <span>1_2.jpeg</span>
+              <span style="font-size:0.7rem; color:var(--muted)">clique p/ trocar</span>
+            </div>
+            <label class="photo-slot" for="file-input" title="Clique para selecionar sua foto">
+              <img id="foto" src="1_2.jpeg" alt="Foto do Rai" onerror="this.style.display='none'; document.getElementById('foto-ph').style.display='block';">
+              <div class="photo-ph" id="foto-ph" style="display:none;">
+                <b>R</b>
+                <span>[CLIQUE AQUI PARA ESCOLHER SUA FOTO]</span>
+              </div>
+              <div class="upload-tip">Selecionar foto do PC</div>
+            </label>
+            <input type="file" id="file-input" accept="image/*" hidden>
+          </div>
+
+          <div class="code">
+            <div class="code-bar">perfil.js</div>
+            <div class="code-body">
+              <div class="cl"><span class="ln">1</span><span><span class="k">const</span> rai <span class="p">=</span> {</span></div>
+              <div class="cl"><span class="ln">2</span><span>  idade<span class="p">:</span> <span class="n">25</span>,</span></div>
+              <div class="cl"><span class="ln">3</span><span>  cidade<span class="p">:</span> <span class="s">"Samambaia Sul, DF"</span>,</span></div>
+              <div class="cl"><span class="ln">4</span><span>  curso<span class="p">:</span> <span class="s">"Engenharia de Software"</span>,</span></div>
+              <div class="cl"><span class="ln">5</span><span>  faculdade<span class="p">:</span> <span class="s">"UDF"</span>,</span></div>
+              <div class="cl"><span class="ln">6</span><span>  cargo<span class="p">:</span> <span class="s">"Encarregado de FLV"</span>,</span></div>
+              <div class="cl"><span class="ln">7</span><span>  stack<span class="p">:</span> [<span class="s">"JS"</span>, <span class="s">"C"</span>, <span class="s">"MySQL"</span>],</span></div>
+              <div class="cl"><span class="ln">8</span><span>  foco<span class="p">:</span> <span class="s">"Dev Front-end &amp; Dados"</span></span></div>
+              <div class="cl"><span class="ln">9</span><span>};</span></div>
+              <div class="cl"><span class="ln">10</span><span><span class="k">export default</span> rai;</span></div>
+            </div>
+          </div>
+
+          <div class="side">
+            <div class="tabs" role="group">
+              <button class="tab" type="button" data-tab="faculdade" aria-pressed="true">Faculdade</button>
+              <button class="tab" type="button" data-tab="trabalho" aria-pressed="false">Trabalho</button>
+              <button class="tab" type="button" data-tab="codigo" aria-pressed="false">Código</button>
+            </div>
+            <div class="tab-panel">
+              <h3 id="tab-title"></h3>
+              <p id="tab-text"></p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Terminal -->
+    <section class="section" id="terminal">
+      <div class="wrap">
+        <div class="eyebrow">// terminal</div>
+        <h2>Pergunte pro terminal</h2>
+        <p class="sub">Clique em um comando ou digite abaixo para saber mais.</p>
+        <div class="term">
+          <div class="term-bar">rai@samambaia:~</div>
+          <div class="chips">
+            <button class="chip" type="button" data-cmd="ajuda">ajuda</button>
+            <button class="chip" type="button" data-cmd="sobre">sobre</button>
+            <button class="chip" type="button" data-cmd="estudos">estudos</button>
+            <button class="chip" type="button" data-cmd="trabalho">trabalho</button>
+            <button class="chip" type="button" data-cmd="skills">skills</button>
+            <button class="chip" type="button" data-cmd="projetos">projetos</button>
+            <button class="chip" type="button" data-cmd="limpar">limpar</button>
+          </div>
+          <div class="term-out" id="term-out"></div>
+          <form class="term-form" id="term-form" autocomplete="off">
+            <span class="g">$</span>
+            <input id="cmd" type="text" placeholder="digite ajuda..." spellcheck="false">
+            <button class="send" type="submit">Enviar</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stack e projetos -->
+    <section class="section alt" id="projetos">
+      <div class="wrap">
+        <div class="eyebrow">// stack e projetos</div>
+        <h2>O que eu uso e o que eu faço</h2>
+        <div class="stack">
+          <span class="tag">HTML5 &amp; CSS3</span>
+          <span class="tag">JavaScript</span>
+          <span class="tag">Linguagem C</span>
+          <span class="tag">MySQL</span>
+          <span class="tag">Git &amp; GitHub</span>
+        </div>
+        <div class="cards">
+          <article class="card">
+            <div class="card-meta">HTML · CSS · JS · 2026</div>
+            <h3>Portfolio Terminal Interativo</h3>
+            <p>Interface pessoal responsiva inspirada em terminais Linux e monitores CRT, com canvas animado e simulador de comandos.</p>
+          </article>
+          <article class="card">
+            <div class="card-meta">GIT · GITHUB · 2026</div>
+            <h3>Desafio Colaborativo Git</h3>
+            <p>Fluxo de trabalho em equipe com criação de branches, pull requests e resolução de conflitos em repositórios compartilhados.</p>
+          </article>
+          <article class="card">
+            <div class="card-meta">MYSQL · MODELAGEM · 2026</div>
+            <h3>Modelagem de Banco de Dados</h3>
+            <p>Estruturação relacional de tabelas, chaves primárias e estrangeiras para controle de estoque e operações.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Música -->
+    <section class="section" id="musica">
+      <div class="wrap">
+        <div class="eyebrow">// tocando-agora</div>
+        <h2>A trilha do código</h2>
+        <div class="player">
+          <div class="cover">333</div>
+          <div class="player-info">
+            <div class="now-label">Tocando agora</div>
+            <h3>Crack com Mussilon</h3>
+            <div class="artist">Matuê</div>
+            <p>A batida certa para manter o foco na hora de debugar código tarde da noite depois da faculdade.</p>
+            <a class="btn btn-primary" href="https://open.spotify.com" target="_blank" rel="noopener">Ouvir no Spotify</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contato -->
+    <section class="section alt" id="contato">
+      <div class="wrap contact">
+        <div>
+          <div class="eyebrow">// contato</div>
+          <h2>Vamos conversar?</h2>
+          <p class="sub">Aberto para oportunidades de estágio em TI, projetos front-end ou troca de ideias sobre tecnologia.</p>
+        </div>
+        <div class="rows">
+          <div class="row"><span class="label">E-mail</span><a href="mailto:rai.almeida@cs.udf.edu.br">rai.almeida@cs.udf.edu.br</a></div>
+          <div class="row"><span class="label">GitHub</span><a href="https://github.com/rai061almeida" target="_blank" rel="noopener">github.com/rai061almeida</a></div>
+          <div class="row"><span class="label">Local</span><span>Samambaia Sul, Brasília - DF</span></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-in">
+      <span>© 2026 Rai · Samambaia Sul, DF</span>
+      <a href="#topo">voltar ao topo</a>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  // 1. Upload instantâneo da foto (funciona direto no navegador caso o ficheiro não esteja na pasta)
+  const fileInput = document.getElementById('file-input');
+  const fotoImg = document.getElementById('foto');
+  const fotoPh = document.getElementById('foto-ph');
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      fotoImg.src = ev.target.result;
+      fotoImg.style.display = 'block';
+      fotoPh.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // 2. Efeito de digitação no Hero
+  const roles = [
+    "Estudante de Engenharia de Software",
+    "Desenvolvedor Front-end & SQL",
+    "Encarregado de FLV em Brasília"
+  ];
+  let rIdx = 0, cIdx = 0, deleting = false;
+  const typedEl = document.getElementById('typed');
+
+  function typeLoop() {
+    const current = roles[rIdx];
+    typedEl.textContent = deleting ? current.slice(0, cIdx--) : current.slice(0, cIdx++);
+    if (!deleting && cIdx > current.length) {
+      deleting = true;
+      setTimeout(typeLoop, 1600);
+      return;
+    }
+    if (deleting && cIdx < 0) {
+      deleting = false;
+      rIdx = (rIdx + 1) % roles.length;
+      cIdx = 0;
+    }
+    setTimeout(typeLoop, deleting ? 35 : 70);
+  }
+  typeLoop();
+
+  // 3. Abas do Perfil
+  const tabData = {
+    faculdade: {
+      title: "Engenharia de Software · UDF",
+      text: "Cursando graduação noturna em Brasília. Foco em algoritmos, lógica em C, modelagem de bancos de dados relacionais e desenvolvimento web."
+    },
+    trabalho: {
+      title: "Encarregado de FLV",
+      text: "Liderança de equipe, controle de perdas, giro de estoque e organização operacional no varejo — disciplina aplicada direto na resolução de problemas."
+    },
+    codigo: {
+      title: "Construindo na prática",
+      text: "Desenvolvendo interfaces responsivas com HTML5, CSS3 e JavaScript, versionamento com Git/GitHub e consultas estruturadas em MySQL."
+    }
+  };
+  const tabs = document.querySelectorAll('.tab');
+  const tabTitle = document.getElementById('tab-title');
+  const tabText = document.getElementById('tab-text');
+
+  function setTab(key) {
+    tabs.forEach(t => t.setAttribute('aria-pressed', t.dataset.tab === key));
+    tabTitle.textContent = tabData[key].title;
+    tabText.textContent = tabData[key].text;
+  }
+  tabs.forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
+  setTab('faculdade');
+
+  // 4. Terminal Interativo
+  const termOut = document.getElementById('term-out');
+  const termForm = document.getElementById('term-form');
+  const cmdInput = document.getElementById('cmd');
+
+  const commands = {
+    ajuda: "Comandos disponíveis: sobre, estudos, trabalho, skills, projetos, limpar",
+    sobre: "Rai, 25 anos, morador de Samambaia Sul (DF). Unindo gestão operacional com desenvolvimento de software.",
+    estudos: "Bacharelado em Engenharia de Software na UDF (noturno). Base sólida em Algoritmos, C e Banco de Dados.",
+    trabalho: "Encarregado de setor (FLV) há 2 anos: foco em liderança, metas, estoque e processos.",
+    skills: "HTML5, CSS3, JavaScript, Linguagem C, MySQL, Git e GitHub.",
+    projetos: "1) Portfolio Terminal Interativo | 2) Desafio Colaborativo Git | 3) Modelagem de Banco de Dados."
+  };
+
+  function printTerm(text, isCmd = false) {
+    const div = document.createElement('div');
+    div.className = 'term-line';
+    div.innerHTML = isCmd ? `<span class="g">$ ${text}</span>` : text;
+    termOut.appendChild(div);
+    termOut.scrollTop = termOut.scrollHeight;
+  }
+
+  function runCmd(raw) {
+    const cmd = raw.trim().toLowerCase();
+    if (!cmd) return;
+    printTerm(cmd, true);
+    if (cmd === 'limpar') {
+      termOut.innerHTML = '';
+      return;
+    }
+    printTerm(commands[cmd] || `Comando não encontrado: "${cmd}". Digite "ajuda".`);
+  }
+
+  termForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    runCmd(cmdInput.value);
+    cmdInput.value = '';
+  });
+  document.querySelectorAll('.chip').forEach(btn => {
+    btn.addEventListener('click', () => runCmd(btn.dataset.cmd));
+  });
+  printTerm('Bem-vindo ao terminal do Rai. Clique num botão acima ou digite "ajuda".');
+
+  // 5. Botões CRT e Chuva Matrix
+  const btnCrt = document.getElementById('btn-crt');
+  const btnRain = document.getElementById('btn-rain');
+
+  btnCrt.addEventListener('click', () => {
+    const off = document.body.classList.toggle('no-crt');
+    btnCrt.textContent = off ? 'CRT: desligado' : 'CRT: ligado';
+  });
+  btnRain.addEventListener('click', () => {
+    const off = document.body.classList.toggle('no-rain');
+    btnRain.textContent = off ? 'Chuva: desligada' : 'Chuva: ligada';
+  });
+
+  // Canvas Matrix
+  const canvas = document.getElementById('rain');
+  const ctx = canvas.getContext('2d');
+  let cols, drops;
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    cols = Math.floor(canvas.width / 16);
+    drops = Array(cols).fill(1);
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  setInterval(() => {
+    ctx.fillStyle = 'rgba(8, 12, 10, 0.08)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#00ff66';
+    ctx.font = '14px JetBrains Mono';
+    drops.forEach((y, i) => {
+      const char = String.fromCharCode(0x30A0 + Math.random() * 96);
+      ctx.fillText(char, i * 16, y * 16);
+      if (y * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    });
+  }, 50);
+</script>
+</body>
+</html>
